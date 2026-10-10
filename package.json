@@ -1,0 +1,1 @@
+{"name":"minecraft-admin-monorepo","private":true,"scripts":{"start":"npm --prefix apps/dashboard start","setup":"npm --prefix apps/dashboard run setup","test":"npm --prefix apps/dashboard test","test:e2e":"npm --prefix apps/dashboard run test:e2e","build:plugin":"cd plugins/server-dashboard && ./gradlew build"}}

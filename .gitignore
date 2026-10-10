@@ -1,0 +1,13 @@
+.DS_Store
+node_modules/
+.env
+config.json
+data/
+artifacts/
+*.sqlite*
+.gradle/
+build/
+run/
+.idea/
+*.iml
+.codex/

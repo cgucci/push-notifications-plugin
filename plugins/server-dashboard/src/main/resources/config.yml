@@ -1,0 +1,7 @@
+# The ingestion service must bind only to loopback.
+endpoint: 'http://127.0.0.1:8788/ingest'
+# A random secret is generated on first start. Give the service the same value.
+shared-secret: ''
+server-id: 'minecraft'
+# Disk metrics describe the filesystem containing this directory (relative to server root).
+disk-path: '.'

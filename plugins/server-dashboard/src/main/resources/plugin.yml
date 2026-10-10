@@ -1,0 +1,7 @@
+name: ServerDashboard
+version: '${version}'
+
+main: me.connorgooch.serverDashboard.ServerDashboard
+api-version: '26.3'
+load: POSTWORLD
+description: Private loopback telemetry for Minecraft Admin
