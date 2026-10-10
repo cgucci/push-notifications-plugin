@@ -9,9 +9,11 @@ service should be exposed publicly.
    Run `npm ci --prefix /opt/minecraft-admin/apps/dashboard`.
 2. Create `/etc/minecraft-admin` (root-owned, 0750, group `mcadmin`) and
    `/var/lib/minecraft-admin` (owned by `mcadmin`, 0700). Run setup with
-   `MC_ADMIN_CONFIG=/etc/minecraft-admin/config.json`, then set the file owner to
-   `mcadmin` and mode 0600. Set `dataPath` to `/var/lib/minecraft-admin/admin.sqlite`
-   and `origin` to `https://mc.cgooch.org`. Back up config and database together;
+   `MC_ADMIN_CONFIG=/etc/minecraft-admin/config.json` and
+   `MC_ADMIN_DATA_PATH=/var/lib/minecraft-admin/admin.sqlite` as root, then set
+   config and database ownership to `mcadmin` (including any WAL/SHM files), and
+   config mode to 0600. Use `https://mc.cgooch.org` as the public origin during
+   setup. Back up config and database together;
    config's master key decrypts the authenticator secret.
 3. Configure the Paper plugin with the same `ingestSecret` as `shared-secret`,
    `http://127.0.0.1:8788/ingest`, and a stable `server-id`. Restrict its config

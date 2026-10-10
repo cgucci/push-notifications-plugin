@@ -25,7 +25,7 @@ if (!process.stdin.isTTY) {
 const path=process.env.MC_ADMIN_CONFIG||'./config.json';
 if(!existsSync(path)) {
   const keys=webpush.generateVAPIDKeys();
-  writeFileSync(path,JSON.stringify({name:input.name||'Minecraft',origin:input.origin||'https://mc.cgooch.org',development:input.development===true,webPort:input.webPort||8787,ingestPort:input.ingestPort||8788,ingestSecret:input.ingestSecret,masterKey:randomBytes(32).toString('base64'),dataPath:input.dataPath||'./data/admin.sqlite',unit:'minecraft.service',helper:'/usr/local/libexec/minecraft-control',vapid:{...keys,subject:input.vapidSubject||'mailto:admin@cgooch.org'}},null,2),{mode:0o600,flag:'wx'});
+  writeFileSync(path,JSON.stringify({name:input.name||'Minecraft',origin:input.origin||'https://mc.cgooch.org',development:input.development===true,webPort:input.webPort||8787,ingestPort:input.ingestPort||8788,ingestSecret:input.ingestSecret,masterKey:randomBytes(32).toString('base64'),dataPath:input.dataPath||process.env.MC_ADMIN_DATA_PATH||'./data/admin.sqlite',unit:'minecraft.service',helper:'/usr/local/libexec/minecraft-control',vapid:{...keys,subject:input.vapidSubject||'mailto:admin@cgooch.org'}},null,2),{mode:0o600,flag:'wx'});
 }
 const config=loadConfig(path),store=openStore(config.dataPath);
 try { await provision(store,input.username,input.password,input.totpSecret,config.masterKey);console.log('Admin provisioned. Configuration and database remain local.'); }

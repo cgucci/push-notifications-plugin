@@ -30,7 +30,7 @@ try{
   await page.setViewportSize({width,height:900});await page.getByLabel('Appearance').selectOption(theme);
   for(const view of ['overview','activity','settings']){
    await page.getByRole('link',{name:new RegExp('^'+view+'$','i')}).click();await page.locator('#'+view+'-view').waitFor();
-   if(view==='settings')await page.locator('input[name="tpsBelow"]').waitFor();
+   if(view==='settings')await page.locator('input[name="joins"]').waitFor();
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${view} overflows at ${width}/${theme}`);
    await page.screenshot({path:resolve(artifacts,`${view}-${width}-${theme}.png`),fullPage:true});
   }
@@ -58,12 +58,11 @@ try{
  const client=spawn('python3',[resolve('../../plugins/server-dashboard/tools/paper-test-client.py'),String(gamePort)],{stdio:['ignore','pipe','pipe']});const clientChunks=[];client.stdout.on('data',c=>clientChunks.push(c));client.stderr.on('data',c=>clientChunks.push(c));
  await wait(()=>f.store.get('players',[]).some(p=>p.name==='TelemetryTest'),45000);await f.alerts.drain(Date.now());assert.equal(f.pushes.filter(push=>push.payload.title==='TelemetryTest joined').length,1);
  const livePage=await browser.newPage({viewport:{width:390,height:844}});await livePage.route('https://mc-heads.net/**',r=>r.abort());offset=0;
- const sessions=f.store.db.prepare('SELECT * FROM sessions ORDER BY created DESC LIMIT 1').get();
  // Browser login is a fresh TOTP counter; wait only if still in the consumed interval.
  const loginTime=Math.ceil(Date.now()/30000)*30000+100;const delay=loginTime-Date.now();if(delay>0&&delay<30000)await new Promise(r=>setTimeout(r,delay));
  await livePage.goto(f.config.origin);await livePage.getByLabel('Username',{exact:true}).fill('connor');await livePage.getByLabel('Password',{exact:true}).fill(f.password);await livePage.getByLabel('Authenticator code').fill(authenticator.generate(f.secret));await livePage.getByRole('button',{name:'Sign in',exact:false}).click();await livePage.locator('#status').filter({hasText:'Online'}).waitFor();await livePage.screenshot({path:resolve(artifacts,'real-paper-mobile.png'),fullPage:true});
  await wait(()=>!f.store.get('players',[]).some(p=>p.name==='TelemetryTest'),45000);await f.alerts.drain(Date.now());assert.equal(f.store.db.prepare("SELECT count(*) AS n FROM activity WHERE kind='join' AND title='TelemetryTest joined'").get().n,1);assert.equal(f.store.db.prepare("SELECT count(*) AS n FROM activity WHERE kind='leave' AND title='TelemetryTest left'").get().n,1);
- writeFileSync(resolve(artifacts,'client.log'),Buffer.concat(clientChunks));report.checks.push('Actual Paper plugin → authenticated ingestion → SQLite → real browser, real join/leave, one queued/delivered push with browser closed');
+ writeFileSync(resolve(artifacts,'client.log'),Buffer.concat(clientChunks));report.checks.push('Actual Paper plugin → authenticated ingestion → SQLite → real browser, real join/leave, one captured push while browser is closed');
  paper.stdin.write('stop\n');await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Paper stop timeout')),45000);paper.on('exit',code=>{clearTimeout(timer);code===0?resolve():reject(new Error('Paper exited '+code));});});writeFileSync(resolve(artifacts,'paper.log'),Buffer.concat(chunks));assert.ok(Buffer.concat(chunks).toString().includes('Saving worlds'));report.checks.push('Real Paper graceful world-saving shutdown');
  await livePage.getByRole('button',{name:'Sign out'}).click();await livePage.getByRole('heading',{name:'Welcome back.'}).waitFor();assert.equal(await livePage.evaluate(async()=>fetch('/api/dashboard').then(r=>r.status)),401);report.checks.push('Browser logout removes access');
  report.passed=true;writeFileSync(resolve(artifacts,'e2e-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
