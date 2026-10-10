@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import statics from '@fastify/static';
-import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { equal, digest, authenticate } from './security.js';
@@ -84,7 +84,7 @@ export async function createApp(config, store, options = {}) {
     return {id};
   });
   web.delete('/api/subscriptions/:id', async request => { store.db.prepare('DELETE FROM subscriptions WHERE id=?').run(request.params.id); return {ok:true}; });
-  web.post('/api/notifications/test', async () => { alerts.enqueue(randomUUID(),'test',config.name,'Notifications are enabled for Minecraft Admin.','telemetry',now()); return {ok:true}; });
+  web.post('/api/notifications/test', async () => { alerts.enqueue(randomUUID(),'test',config.name,'Notifications are enabled for Minecraft Admin.','test',now()); return {ok:true}; });
   web.post('/api/controls', async (request,reply) => {
     const body=z.object({action:z.enum(['start','stop','restart']),confirmed:z.literal(true)}).strict().parse(request.body);
     if (controlBusy) return fail(reply,409,'A server operation is already in progress');
@@ -104,7 +104,7 @@ export async function createApp(config, store, options = {}) {
     if (request.headers['idempotency-key'] !== request.body?.id) return reply.code(400).send({error:'ID mismatch'});
     return ingest(store,request.body,alerts,now());
   });
-  await web.register(statics,{root:resolve('public'),index:'index.html',dotfiles:'deny'});
+  await web.register(statics,{root:fileURLToPath(new URL('../public/',import.meta.url)),index:'index.html',dotfiles:'deny'});
   web.setNotFoundHandler((request,reply) => reply.code(404).send({error:'Not found'}));
   async function monitor() {
     if (monitoring) return;

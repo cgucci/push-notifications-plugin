@@ -1,0 +1,7 @@
+#!/usr/bin/python3
+"""Install root-owned, mode 0755, at /usr/local/libexec/minecraft-control."""
+import subprocess
+import sys
+if len(sys.argv)!=2 or sys.argv[1] not in ('start','stop','restart'):
+    sys.exit('Only start, stop, restart are permitted')
+subprocess.run(['/usr/bin/systemctl',sys.argv[1],'minecraft.service'],check=True,timeout=140)

@@ -4,7 +4,7 @@ export function createAlerts(store, config, send = webpush.sendNotification.bind
   let sending = false;
   return {
     enqueue(id, kind, title, body, preference, now = Date.now()) {
-      if (!store.preferences()[preference]) return;
+      if (preference !== 'test' && !store.preferences()[preference]) return;
       const payload = JSON.stringify({ id, kind, title, body, url: '/', at: now });
       for (const sub of store.db.prepare('SELECT id FROM subscriptions').all()) {
         store.db.prepare('INSERT OR IGNORE INTO deliveries(id,subscription,payload,due,expires) VALUES(?,?,?,?,?)').run(`${id}:${sub.id}`, sub.id, payload, now, now + 120000);
@@ -40,6 +40,10 @@ export function evaluateHealth(store, alerts, service, now = Date.now(), started
     ['disk', !stale && snapshot.resources.diskAvailableBytes !== null && (snapshot.resources.diskAvailableBytes < prefs.diskGiBBelow * 1073741824 || (snapshot.resources.diskTotalBytes > 0 && snapshot.resources.diskAvailableBytes / snapshot.resources.diskTotalBytes * 100 < prefs.diskPercentBelow)), prefs.diskSeconds * 1000, 'Minecraft disk space low', 'Available disk space stayed below your configured limit.', 'disk']
   ];
   for (const [kind, bad, duration, title, detail, preference] of conditions) {
+    if (stale && kind !== 'telemetry') {
+      store.db.prepare('DELETE FROM pending_health WHERE kind=?').run(kind);
+      continue;
+    }
     const existing = store.db.prepare('SELECT * FROM incidents WHERE kind=?').get(kind);
     if (bad) {
       let pending = store.db.prepare('SELECT * FROM pending_health WHERE kind=?').get(kind);

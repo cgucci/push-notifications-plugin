@@ -1,0 +1,18 @@
+[Unit]
+Description=Minecraft Paper server
+After=network.target
+
+[Service]
+Type=simple
+User=minecraft
+Group=minecraft
+WorkingDirectory=/opt/minecraft
+ExecStart=/usr/bin/python3 /usr/local/libexec/minecraft-runner.py
+KillMode=mixed
+TimeoutStopSec=120
+Restart=on-failure
+RestartSec=10
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

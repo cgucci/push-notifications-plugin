@@ -1,0 +1,24 @@
+[Unit]
+Description=Private Minecraft Admin dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=mcadmin
+Group=mcadmin
+WorkingDirectory=/opt/minecraft-admin/apps/dashboard
+Environment=NODE_ENV=production
+Environment=MC_ADMIN_CONFIG=/etc/minecraft-admin/config.json
+ExecStart=/usr/bin/node src/server.js
+Restart=on-failure
+RestartSec=5
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/minecraft-admin
+UMask=0077
+# NoNewPrivileges is intentionally not set: the sole sudo rule below permits
+# the fixed root-owned helper. The helper accepts no unit name or commands.
+
+[Install]
+WantedBy=multi-user.target
