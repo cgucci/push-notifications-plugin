@@ -1,4 +1,4 @@
-import os,pty,select,subprocess,time,unittest
+import os,pty,select,signal,subprocess,time,unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 class SetupPromptTests(unittest.TestCase):
@@ -19,7 +19,14 @@ class SetupPromptTests(unittest.TestCase):
    wait_for(b'Password (at least 12 characters): ');os.write(master,b'private-test-password\n')
    data=wait_for(b'Plugin shared-secret (blank to generate): ');self.assertNotIn(b'private-test-password',data);os.write(master,b'\n')
    wait_for(b'Public origin [https://mc.cgooch.org]: ');os.write(master,b'https://mc.cgooch.org\n')
-   wait_for(b'Verify authenticator code: ');os.write(master,b'\x03');child.wait(timeout=5);self.assertEqual(child.returncode,130)
+   wait_for(b'Verify authenticator code: ');child.send_signal(signal.SIGINT)
+   deadline=time.monotonic()+5
+   while child.poll() is None and time.monotonic()<deadline:
+    ready,_,_=select.select([master],[],[],.1)
+    if ready:
+     try:os.read(master,8192)
+     except OSError:break
+   child.wait(timeout=1);self.assertEqual(child.returncode,130)
   finally:
    if child.poll() is None:child.kill();child.wait()
    os.close(master)
