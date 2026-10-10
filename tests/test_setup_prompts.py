@@ -16,7 +16,7 @@ class SetupPromptTests(unittest.TestCase):
    self.fail('Setup prompt did not appear: '+needle.decode())
   try:
    wait_for(b'Admin username [connor]: ');os.write(master,b'test-admin\n')
-   wait_for(b'Password (at least 12 characters): ');os.write(master,b'private-test-password\n')
+   wait_for(b'Password (at least 10 characters): ');os.write(master,b'private-test-password\n')
    data=wait_for(b'Plugin shared-secret (blank to generate): ');self.assertNotIn(b'private-test-password',data);os.write(master,b'\n')
    wait_for(b'Public origin [https://mc.cgooch.org]: ');os.write(master,b'https://mc.cgooch.org\n')
    wait_for(b'Verify authenticator code: ');child.send_signal(signal.SIGINT)

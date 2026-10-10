@@ -16,7 +16,7 @@ export function decrypt(text, key) {
 }
 export async function provision(store, username, password, secret, masterKey) {
   if (store.db.prepare('SELECT id FROM admin').get()) throw new Error('Admin already exists');
-  if (password.length < 12 || password.length > 256) throw new Error('Password must be 12–256 characters');
+  if (password.length < 10 || password.length > 256) throw new Error('Password must be 10–256 characters');
   const hash = await argon2.hash(password, { type: argon2.argon2id, memoryCost: 19456, timeCost: 3, parallelism: 1 });
   store.db.prepare('INSERT INTO admin(id,username,password,totp) VALUES(1,?,?,?)').run(username, hash, encrypt(secret, masterKey));
 }

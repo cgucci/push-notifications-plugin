@@ -19,7 +19,7 @@ if (!process.stdin.isTTY && !process.argv.includes('--interactive')) {
   const cancel=()=>{muted=false;reader.close();process.stdout.write('\nSetup cancelled.\n');process.exit(130);};
   reader.on('SIGINT',cancel);process.once('SIGINT',cancel);
   const ask=async(prompt,hidden=false)=>{muted=false;const answer=reader.question(prompt);muted=hidden;const value=await answer;muted=false;if(hidden)process.stdout.write('\n');return value;};
-  input={username:(await ask('Admin username [connor]: '))||'connor',password:await ask('Password (at least 12 characters): ',true),ingestSecret:await ask('Plugin shared-secret (blank to generate): ',true),origin:(await ask('Public origin [https://mc.cgooch.org]: '))||'https://mc.cgooch.org'};
+  input={username:(await ask('Admin username [connor]: '))||'connor',password:await ask('Password (at least 10 characters): ',true),ingestSecret:await ask('Plugin shared-secret (blank to generate): ',true),origin:(await ask('Public origin [https://mc.cgooch.org]: '))||'https://mc.cgooch.org'};
   input.totpSecret=authenticator.generateSecret();
   console.log('\nAdd this account to your authenticator app:\n'+authenticator.keyuri(input.username,'Minecraft Admin',input.totpSecret));
   const code=await ask('Verify authenticator code: ');
