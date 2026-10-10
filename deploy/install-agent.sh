@@ -7,7 +7,7 @@ if [ "$EUID" -ne 0 ] || [ "$#" -ne 2 ]; then
 fi
 MC_DIRECTORY=$(realpath "$1")
 MC_UNIT=$2
-if [ ! -f "$MC_DIRECTORY/server.jar" ] || [[ ! "$MC_UNIT" =~ ^[A-Za-z0-9_.@-]+\.service$ ]]; then
+if { [ ! -f "$MC_DIRECTORY/server.jar" ] && [ ! -f "$MC_DIRECTORY/paper.jar" ]; } || [[ ! "$MC_UNIT" =~ ^[A-Za-z0-9_.@-]+\.service$ ]]; then
   echo 'Supply your existing server directory and unit.' >&2
   exit 1
 fi

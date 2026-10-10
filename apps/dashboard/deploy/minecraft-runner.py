@@ -7,7 +7,10 @@ systemd timeout fallback; the normal path sends `stop` and waits for world saves
 import signal
 import subprocess
 import threading
-child=subprocess.Popen(['/usr/bin/java','-Xms2G','-Xmx2G','-jar','server.jar','--nogui'],stdin=subprocess.PIPE,text=True)
+import sys
+if not sys.argv[1:]:
+    raise SystemExit('Supply the existing Java arguments after minecraft-runner.py')
+child=subprocess.Popen(['/usr/bin/java',*sys.argv[1:]],stdin=subprocess.PIPE,text=True)
 stopping=threading.Event()
 def stop(signum,frame):
     if not stopping.is_set():

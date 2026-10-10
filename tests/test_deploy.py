@@ -67,3 +67,17 @@ class RollbackTests(unittest.TestCase):
   self.assertEqual(self.run_deploy(False),[('stop','minecraft-admin.service'),('start','minecraft-admin.service')])
  def test_failed_plugin_release_restores_previous_runtime(self):
   calls=self.run_deploy(True,True);self.assertEqual(calls[-2:],[('start','minecraft-admin.service'),('start','minecraft.service')])
+
+class RunnerTests(unittest.TestCase):
+ def test_sigterm_sends_stop_and_waits_for_save(self):
+  import os,signal,subprocess,shutil
+  if not shutil.which('javac') or not Path('/usr/bin/java').exists():self.skipTest('Java not installed')
+  with tempfile.TemporaryDirectory() as directory:
+   root=Path(directory);source=root/'StopProbe.java'
+   source.write_text('public class StopProbe { public static void main(String[] args) throws Exception { System.out.println("READY"); var in=new java.io.BufferedReader(new java.io.InputStreamReader(System.in)); if ("stop".equals(in.readLine())) { System.out.println("Saving worlds"); } else { System.exit(1); } } }')
+   subprocess.run(['javac','--release','17',str(source)],check=True,timeout=30)
+   child=subprocess.Popen(['python3',str(ROOT/'apps/dashboard/deploy/minecraft-runner.py'),'-cp',str(root),'StopProbe'],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+   try:
+    self.assertEqual(child.stdout.readline().strip(),'READY');child.send_signal(signal.SIGTERM);out,error=child.communicate(timeout=10);self.assertEqual(child.returncode,0,error);self.assertIn('Saving worlds',out)
+   finally:
+    if child.poll() is None:child.kill();child.wait()

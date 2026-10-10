@@ -19,7 +19,7 @@ def root_config(path):
  config=json.loads(path.read_text())
  if not re.fullmatch(r'[A-Za-z0-9_.@-]+\.service',config['minecraftUnit']):raise ValueError('Invalid Minecraft unit')
  directory=Path(config['minecraftDirectory'])
- if not directory.is_absolute() or not (directory/'server.jar').is_file():raise ValueError('Set the existing Minecraft directory')
+ if not directory.is_absolute() or not any((directory/name).is_file() for name in ('server.jar','paper.jar')):raise ValueError('Set the existing Minecraft directory')
  return config
 
 def fetch(url,limit=2*1024*1024):
