@@ -11,3 +11,5 @@ run/
 .idea/
 *.iml
 .codex/
+__pycache__/
+release/

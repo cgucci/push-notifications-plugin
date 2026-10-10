@@ -1,0 +1,93 @@
+name: Test and publish
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: minecraft-admin-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/dashboard/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+      - name: Install dependencies
+        run: npm ci --prefix apps/dashboard
+      - name: Backend integration tests
+        run: npm test
+      - name: Build and test Paper plugin
+        run: npm run build:plugin
+      - name: Install browser
+        working-directory: apps/dashboard
+        run: npx playwright install --with-deps chromium
+      - name: Responsive browser E2E
+        env:
+          MC_E2E_UI_ONLY: '1'
+        run: npm run test:e2e
+      - name: Deployment agent tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Keep production dependencies
+        run: npm prune --omit=dev --prefix apps/dashboard
+      - name: Package tested release
+        run: python3 deploy/package-release.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: runtime
+          path: release/minecraft-admin.tar.gz*
+          retention-days: 7
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-debug
+          path: apps/dashboard/artifacts/*.png
+          retention-days: 7
+  publish:
+    needs: verify
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: runtime
+          path: release
+      - name: Publish tested main release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CURRENT_SHA=$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq '.object.sha')
+          if [ "$CURRENT_SHA" != "$RELEASE_SHA" ]; then
+            echo 'A newer commit is on main; skipping obsolete release.'
+            exit 0
+          fi
+          TAG="deploy-$RELEASE_SHA"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo 'This tested commit already has a release.'
+          else
+            gh release create "$TAG" release/minecraft-admin.tar.gz release/minecraft-admin.tar.gz.sha256 \
+              --target "$RELEASE_SHA" --title "Deploy ${RELEASE_SHA:0:12}" --notes 'Tested dashboard and Paper plugin runtime. Installed by the VM pull agent.' --latest
+          fi

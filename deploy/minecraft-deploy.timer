@@ -1,0 +1,11 @@
+[Unit]
+Description=Check for tested Minecraft Admin releases every two minutes
+
+[Timer]
+OnBootSec=60
+OnUnitInactiveSec=120
+Persistent=true
+Unit=minecraft-deploy.service
+
+[Install]
+WantedBy=timers.target

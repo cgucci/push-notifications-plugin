@@ -42,7 +42,10 @@ try{
  await page.getByRole('button',{name:'Restart',exact:true}).click();await page.getByRole('button',{name:'Restart server',exact:true}).click();await page.locator('#message').filter({hasText:'completed'}).waitFor();assert.deepEqual(f.operations,['restart']);report.checks.push('Saved preferences, remembered dark mode, cancel and confirmed control actions');
  const cached=await page.evaluate(async()=>{await navigator.serviceWorker.ready;const keys=await caches.keys();return(await Promise.all(keys.map(async key=>(await(await caches.open(key)).keys()).map(req=>new URL(req.url).pathname)))).flat();});assert.ok(!cached.some(path=>path.startsWith('/api/')||path==='/'));report.checks.push('Service worker never caches API responses or private HTML');
  offset=31000;await f.monitor();await page.reload();await page.locator('#status').filter({hasText:'Unresponsive'}).waitFor();offset=0;await f.postTelemetry({...base,id:randomUUID(),sequence:2,capturedAt:new Date().toISOString()});await f.monitor();await page.reload();await page.locator('#status').filter({hasText:'Online'}).waitFor();report.checks.push('Browser stale status and recovery');
- assert.deepEqual(errors,[]);await context.close();
+ assert.deepEqual(errors,[]);
+ if(process.env.MC_E2E_UI_ONLY==='1'){await page.getByRole('button',{name:'Sign out'}).click();await page.getByRole('heading',{name:'Welcome back.'}).waitFor();assert.equal(await page.evaluate(async()=>fetch('/api/dashboard').then(r=>r.status)),401);report.checks.push('Browser logout removes access');}
+ await context.close();
+ if(process.env.MC_E2E_UI_ONLY!=='1'){
  // Run the actual plugin against the actual intake listener and the bundled real-player client.
  const original=process.env.MC_SERVER_DIR||resolve(homedir(),'Projects/mc server'),server=resolve(artifacts,'paper');mkdirSync(server,{recursive:true});
  for(const file of ['server.jar','eula.txt'])copyFileSync(resolve(original,file),resolve(server,file));for(const dir of ['libraries','versions','cache'])cpSync(resolve(original,dir),resolve(server,dir),{recursive:true});
@@ -65,5 +68,6 @@ try{
  writeFileSync(resolve(artifacts,'client.log'),Buffer.concat(clientChunks));report.checks.push('Actual Paper plugin → authenticated ingestion → SQLite → real browser, real join/leave, one captured push while browser is closed');
  paper.stdin.write('stop\n');await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Paper stop timeout')),45000);paper.on('exit',code=>{clearTimeout(timer);code===0?resolve():reject(new Error('Paper exited '+code));});});writeFileSync(resolve(artifacts,'paper.log'),Buffer.concat(chunks));assert.ok(Buffer.concat(chunks).toString().includes('Saving worlds'));report.checks.push('Real Paper graceful world-saving shutdown');
  await livePage.getByRole('button',{name:'Sign out'}).click();await livePage.getByRole('heading',{name:'Welcome back.'}).waitFor();assert.equal(await livePage.evaluate(async()=>fetch('/api/dashboard').then(r=>r.status)),401);report.checks.push('Browser logout removes access');
+ }
  report.passed=true;writeFileSync(resolve(artifacts,'e2e-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 }finally{if(paper&&paper.exitCode===null){paper.stdin.write('stop\n');await new Promise(resolve=>{const timer=setTimeout(()=>{paper.kill('SIGTERM');resolve();},45000);paper.once('exit',()=>{clearTimeout(timer);resolve();});});}await browser.close();await f.close();}

@@ -1,0 +1,11 @@
+[Unit]
+Description=Install tested Minecraft Admin releases from GitHub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/python3 /usr/local/libexec/minecraft-deploy.py
+TimeoutStartSec=10min
+UMask=0077

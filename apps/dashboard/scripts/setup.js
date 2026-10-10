@@ -16,7 +16,7 @@ if (!process.stdin.isTTY) {
   const output=new Writable({write(chunk,encoding,callback){if(!muted)process.stdout.write(chunk);callback();}});
   const reader=createInterface({input:process.stdin,output,terminal:true});
   const ask=async(prompt,hidden=false)=>{process.stdout.write(prompt);muted=hidden;const value=await reader.question('');muted=false;if(hidden)process.stdout.write('\n');return value;};
-  input={username:(await ask('Admin username [connor]: '))||'connor',password:await ask('Password (at least 12 characters): ',true),ingestSecret:await ask('Plugin shared-secret: ',true),origin:(await ask('Public origin [https://mc.cgooch.org]: '))||'https://mc.cgooch.org'};
+  input={username:(await ask('Admin username [connor]: '))||'connor',password:await ask('Password (at least 12 characters): ',true),ingestSecret:await ask('Plugin shared-secret (blank to generate): ',true),origin:(await ask('Public origin [https://mc.cgooch.org]: '))||'https://mc.cgooch.org'};
   input.totpSecret=authenticator.generateSecret();
   console.log('\nAdd this account to your authenticator app:\n'+authenticator.keyuri(input.username,'Minecraft Admin',input.totpSecret));
   const code=await ask('Verify authenticator code: ');
@@ -25,7 +25,7 @@ if (!process.stdin.isTTY) {
 const path=process.env.MC_ADMIN_CONFIG||'./config.json';
 if(!existsSync(path)) {
   const keys=webpush.generateVAPIDKeys();
-  writeFileSync(path,JSON.stringify({name:input.name||'Minecraft',origin:input.origin||'https://mc.cgooch.org',development:input.development===true,webPort:input.webPort||8787,ingestPort:input.ingestPort||8788,ingestSecret:input.ingestSecret,masterKey:randomBytes(32).toString('base64'),dataPath:input.dataPath||process.env.MC_ADMIN_DATA_PATH||'./data/admin.sqlite',unit:'minecraft.service',helper:'/usr/local/libexec/minecraft-control',vapid:{...keys,subject:input.vapidSubject||'mailto:admin@cgooch.org'}},null,2),{mode:0o600,flag:'wx'});
+  writeFileSync(path,JSON.stringify({name:input.name||'Minecraft',origin:input.origin||'https://mc.cgooch.org',development:input.development===true,webPort:input.webPort||8787,ingestPort:input.ingestPort||8788,ingestSecret:input.ingestSecret||randomBytes(32).toString('base64url'),masterKey:randomBytes(32).toString('base64'),dataPath:input.dataPath||process.env.MC_ADMIN_DATA_PATH||'./data/admin.sqlite',unit:'minecraft.service',helper:'/usr/local/libexec/minecraft-control',vapid:{...keys,subject:input.vapidSubject||'mailto:admin@cgooch.org'}},null,2),{mode:0o600,flag:'wx'});
 }
 const config=loadConfig(path),store=openStore(config.dataPath);
 try { await provision(store,input.username,input.password,input.totpSecret,config.masterKey);console.log('Admin provisioned. Configuration and database remain local.'); }
