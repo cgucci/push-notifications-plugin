@@ -48,7 +48,7 @@ sudo bash deploy/install-agent.sh /opt/minecraft minecraft.service
 cd apps/dashboard
 sudo env MC_ADMIN_CONFIG=/etc/minecraft-admin/config.json \
   MC_ADMIN_DATA_PATH=/var/lib/minecraft-admin/admin.sqlite \
-  /usr/bin/node scripts/setup.js
+  /usr/bin/node scripts/setup.js --interactive
 ```
 
 Choose username/password, leave shared-secret blank to generate one, and use

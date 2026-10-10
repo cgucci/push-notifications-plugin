@@ -23,7 +23,8 @@ npm start
 
 Setup provisions the single admin, encrypts the authenticator secret, generates
 VAPID/master keys, and writes an ignored, mode-0600 configuration. Use the same
-plugin secret on both sides. For local development, provisioning JSON on stdin
+plugin secret on both sides. For unattended setup, use `scripts/setup.js --json`
+with provisioning JSON on stdin. For local development, that JSON
 supports `development: true` and a loopback `origin`; production requires HTTPS.
 No password or secret is accepted as a command-line argument.
 
