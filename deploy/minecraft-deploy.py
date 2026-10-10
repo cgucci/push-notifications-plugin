@@ -110,7 +110,11 @@ def replace_plugin(directory,data):
  name='.admin-'+secrets.token_hex(16)+'.jar'
  try:
   output=os.open(name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o644,dir_fd=fd)
-  with os.fdopen(output,'wb') as file:file.write(data)
+  with os.fdopen(output,'wb') as file:
+   file.write(data)
+   # The service's UMask=0077 masks os.open's mode to 0600. Set the
+   # final mode on the open file so Minecraft can read it after rename.
+   os.fchmod(file.fileno(),0o644)
   os.replace(name,'ServerDashboard.jar',src_dir_fd=fd,dst_dir_fd=fd)
  finally:
   try:os.unlink(name,dir_fd=fd)

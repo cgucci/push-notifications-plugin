@@ -37,6 +37,17 @@ class DeploymentTests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 
 class AtomicPluginTests(unittest.TestCase):
+ def test_plugin_readable_under_service_umask(self):
+  import os,stat
+  with tempfile.TemporaryDirectory() as directory:
+   plugins=Path(directory)
+   previous=os.umask(0o077)
+   try:
+    agent.replace_plugin(plugins,b'new jar')
+    self.assertEqual(stat.S_IMODE((plugins/'ServerDashboard.jar').stat().st_mode),0o644)
+    agent.replace_plugin(plugins,b'rollback jar')
+    self.assertEqual(stat.S_IMODE((plugins/'ServerDashboard.jar').stat().st_mode),0o644)
+   finally:os.umask(previous)
  def test_plugin_symlink_does_not_redirect_writes(self):
   with tempfile.TemporaryDirectory() as directory:
    root=Path(directory);plugins=root/'plugins';plugins.mkdir();outside=root/'outside';outside.write_bytes(b'protected');(plugins/'ServerDashboard.jar').symlink_to(outside)
